@@ -22,7 +22,7 @@ def get_image_hash():
 r = requests.get(DATA_URL)
 df = pd.read_csv(
     io.StringIO(r.text),
-    index_col="data_somministrazione",
+    index_col="data",
 )
 df.index = pd.to_datetime(
     df.index,
@@ -30,13 +30,13 @@ df.index = pd.to_datetime(
 )
 df = df.loc[df["area"] != "ITA"]
 df=df.groupby(df.index).sum()
-df["seconda_dose"] = pd.to_numeric(df["seconda_dose"])
+df["d2"] = pd.to_numeric(df["d2"])
 if dt.now() - df.index[-1] < td(days=1):
     df = df[:-1]  # Ignore the current day because it's often incomplete
 
-totalVaccines = sum(df["seconda_dose"])
+totalVaccines = sum(df["d2"])
 lastWeekData = df.loc[df.index > df.index[-1] - td(days=7) + td(hours=2)]
-vaccinesPerDayAverage = sum(lastWeekData["seconda_dose"]) / 7
+vaccinesPerDayAverage = sum(lastWeekData["d2"]) / 7
 remainingDays = (HIT - totalVaccines) / vaccinesPerDayAverage
 hitDate = df.index[-1] + td(days=remainingDays)
 
@@ -47,9 +47,9 @@ plt.grid(True)
 plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
 plt.gca().xaxis.set_major_locator(mdates.AutoDateLocator())
 plt.gcf().autofmt_xdate()
-plt.bar(lastWeekData.index, height=lastWeekData["seconda_dose"])
+plt.bar(lastWeekData.index, height=lastWeekData["d2"])
 # Trendline
-z = np.polyfit(range(0, 7), lastWeekData["seconda_dose"], 2)
+z = np.polyfit(range(0, 7), lastWeekData["d2"], 2)
 p = np.poly1d(z)
 plt.plot(lastWeekData.index, p(range(0, 7)), "r--")
 plt.savefig("plot.png", dpi=300, bbox_inches='tight')
